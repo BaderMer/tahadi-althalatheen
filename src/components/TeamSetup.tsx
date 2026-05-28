@@ -10,13 +10,12 @@ import { soundEffects } from '../utils/audio';
 
 interface TeamSetupProps {
   onBack: () => void;
-  onNext: (teamAName: string, teamBName: string, maxRounds: number) => void;
+  onNext: (teamAName: string, teamBName: string) => void;
 }
 
 export default function TeamSetup({ onBack, onNext }: TeamSetupProps) {
   const [teamA, setTeamA] = useState('الأشاوس');
   const [teamB, setTeamB] = useState('الوحوش');
-  const [rounds, setRounds] = useState(5);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,12 +24,7 @@ export default function TeamSetup({ onBack, onNext }: TeamSetupProps) {
       return;
     }
     soundEffects.playClick();
-    onNext(teamA.trim(), teamB.trim(), rounds);
-  };
-
-  const selectRounds = (num: number) => {
-    soundEffects.playClick();
-    setRounds(num);
+    onNext(teamA.trim(), teamB.trim());
   };
 
   // Fun random generators
@@ -117,29 +111,26 @@ export default function TeamSetup({ onBack, onNext }: TeamSetupProps) {
             </div>
           </div>
 
-          {/* Section: Round Settings */}
-          <div className="space-y-3 pt-2">
-            <h3 className="text-sm font-bold text-indigo-400 flex items-center gap-1.5 step-heading">
-              <Award className="w-4 h-4" />
-              النقاط المطلوبة للفوز
-            </h3>
-            <p className="text-xs text-slate-400">كم جولة مرشحة للفوز الكلي بالمعركة؟</p>
-            
-            <div className="grid grid-cols-4 gap-2">
-              {[3, 5, 7, 10].map((num) => (
-                <button
-                  key={num}
-                  type="button"
-                  onClick={() => selectRounds(num)}
-                  className={`py-3 rounded-xl font-bold font-sans transition-all text-sm border cursor-pointer ${
-                    rounds === num
-                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 border-violet-500 text-white shadow-md shadow-violet-500/10'
-                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-900'
-                  }`}
-                >
-                  {num} جولات
-                </button>
-              ))}
+          {/* Fixed TV show match flow informational notice */}
+          <div className="bg-slate-950/80 border border-slate-850 p-4 rounded-xl space-y-2.5">
+            <h4 className="text-xs font-bold text-indigo-300">مسار المواجهة الكبرى (ثابت وتلقائي):</h4>
+            <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-400">
+              <div className="bg-slate-900 border border-slate-800 px-2 py-1.5 rounded-lg flex flex-col justify-center">
+                <span className="font-bold text-slate-300">١. تحدي الدور 🕹️</span>
+                <span>٣ أسئلة بالدور</span>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 px-2 py-1.5 rounded-lg flex flex-col justify-center">
+                <span className="font-bold text-slate-300">٢. المزاد ⚖️</span>
+                <span>٤ أسئلة مزايدة حية</span>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 px-2 py-1.5 rounded-lg flex flex-col justify-center">
+                <span className="font-bold text-slate-300">٣. الجرس 🔔</span>
+                <span>٥ أسئلة سرعة بديهة</span>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 px-2 py-1.5 rounded-lg flex flex-col justify-center">
+                <span className="font-bold text-slate-300">٤. من أنا؟ 👤</span>
+                <span>٥ أسئلة تلميحات</span>
+              </div>
             </div>
           </div>
 

@@ -15,7 +15,9 @@ export type CategoryId =
   | 'football' 
   | 'capitals' 
   | 'islamic' 
-  | 'adult_18';
+  | 'adult_18'
+  | 'foreign_series'
+  | 'countries';
 
 export interface Category {
   id: CategoryId;

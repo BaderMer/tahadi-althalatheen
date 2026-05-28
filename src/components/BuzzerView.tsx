@@ -134,7 +134,7 @@ export default function BuzzerView({
 
             <div>
               <span className="text-[10px] font-bold text-amber-400 uppercase bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
-                الطور الثاني • جرس السرعة (الجولة {currentRound})
+                القسم الثالث • جرس السرعة (السؤال {currentRound} من {maxRounds})
               </span>
               <div className="text-xs text-slate-500 mt-2">
                 المرجع للقسم: {currentQuestion.category.toUpperCase()}
@@ -229,7 +229,7 @@ export default function BuzzerView({
           <div className="bg-slate-900 border border-slate-850 p-4 rounded-3xl text-center shadow-xl flex flex-col justify-center items-center z-20 min-h-[140px]" dir="rtl">
             <span className="text-2xs font-extrabold text-amber-500 uppercase flex items-center gap-1.5 mb-1 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/15">
               <Zap className="w-3 h-3 fill-current" />
-              جرس السرعة الحاسم • الجولة {currentRound}
+              جرس السرعة الحاسم • السؤال {currentRound} من {maxRounds}
             </span>
             <p className="text-base font-black text-slate-100 leading-relaxed font-sans mt-1">
               {currentQuestion.questionAr}

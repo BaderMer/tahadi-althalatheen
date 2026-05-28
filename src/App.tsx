@@ -8,40 +8,109 @@ import Splash from './components/Splash';
 import MainMenu from './components/MainMenu';
 import TeamSetup from './components/TeamSetup';
 import CategorySelect from './components/CategorySelect';
-import GameModeSelect from './components/GameModeSelect';
 import TurnChallengeView from './components/TurnChallengeView';
 import AuctionView from './components/AuctionView';
 import BuzzerView from './components/BuzzerView';
 import WhoAmIView from './components/WhoAmIView';
 import RoundResultView from './components/RoundResultView';
 import WinnerView from './components/WinnerView';
+import SectionTransition from './components/SectionTransition';
 
 import { LIST_QUESTIONS, TRIVIA_QUESTIONS } from './data/questions';
 import { GameMode, CategoryId, Team, ListQuestion, TriviaQuestion } from './types';
 
-export default function App() {
-  // Screens: 'splash' | 'menu' | 'team_setup' | 'category_select' | 'mode_select' | 'gameplay' | 'round_result' | 'winner'
-  const [screen, setScreen] = useState<'splash' | 'menu' | 'team_setup' | 'category_select' | 'mode_select' | 'gameplay' | 'round_result' | 'winner'>('splash');
+// Static configurations for the TV-show sequential match flow
+const MATCH_SECTIONS = [
+  {
+    id: 'turn_challenge' as const,
+    title: 'تحدي الدور 🕹️',
+    description: '٣ أسئلة • الإجابة بالدور مع ٣ أرواح لكل فريق. تجنب الخطأ واحصد نقاط التفوق!',
+    rules: [
+      "٣ أسئلة متسلسلة للطرفين يتم الإجابة فيها بالتبادل والتناوب.",
+      "كل فريق لديه ٣ أرواح (محاولات خطأ) والهدف كشف أكبر عدد من إجابات الكلمة.",
+      "الفريق الحاصد لبقايا الأرواح الأكثر يكسب نقطة السؤال!"
+    ]
+  },
+  {
+    id: 'auction' as const,
+    title: 'مزاد الإجابات ⚖️',
+    description: '٤ أسئلة مزايدة حاسمة • زايد بذكاء مع خصمك على كمية الإجابات التي يمكنك سردها ثقة بالنجاح!',
+    rules: [
+      "مسابقة مزايدة حماسية تدوم لـ ٤ عناصر سرية ممتعة.",
+      "صاحب المزايدة الأعلى يحب عليه كشف العدد المعلن بدون خطأ واحد ليكسب المزاد.",
+      "الفشل يمنح النقطة مباشرة وبشكل تنافسي للخصم دون عناء!"
+    ]
+  },
+  {
+    id: 'buzzer' as const,
+    title: 'جرس السرعة 🔔',
+    description: '٥ أسئلة سرعة • من يقرع جرس السرعة ويسارع في الرد يستولي على النقطة!',
+    rules: [
+      "٥ جولات صاخبة للأسئلة الثقافية السريعة والبديهية.",
+      "السرعة القصوى بضغط زر الضربة هي من تفصل الفريق المجيب.",
+      "الفشل في الإجابة يطردك ويضمن للخصم التقدم الآمن!"
+    ]
+  },
+  {
+    id: 'who_am_i' as const,
+    title: 'من أنا؟ 👤',
+    description: '٥ أسئلة تلميحات تدريجية • خمّن الشخصية أو المعلم الجغرافي قبل نفاد الوقت والمعلومات!',
+    rules: [
+      "٥ تحديات غامضة متتالية مع مؤقت تراجع سريع لـ ٥ معلومات.",
+      "يتم كشف التلميحات بشكل مدرج من الأصعب إلى الأبسط.",
+      "تتطلب معرفة الخيوط بالتركيز والمخاطرة السريعة لكسب النقطة كلياً!"
+    ]
+  }
+];
 
-  // Unified State Engine
+const MATCH_FLOW = [
+  // Section 0: تحدي الدور (3 questions)
+  { sectionIndex: 0, mode: 'turn_challenge' as const, questionIndexInSection: 1, totalQuestionsInSection: 3 },
+  { sectionIndex: 0, mode: 'turn_challenge' as const, questionIndexInSection: 2, totalQuestionsInSection: 3 },
+  { sectionIndex: 0, mode: 'turn_challenge' as const, questionIndexInSection: 3, totalQuestionsInSection: 3 },
+  
+  // Section 1: المزاد (1 step that plays 4 questions internally)
+  { sectionIndex: 1, mode: 'auction' as const, questionIndexInSection: 1, totalQuestionsInSection: 1 },
+  
+  // Section 2: الجرس (5 questions)
+  { sectionIndex: 2, mode: 'buzzer' as const, questionIndexInSection: 1, totalQuestionsInSection: 5 },
+  { sectionIndex: 2, mode: 'buzzer' as const, questionIndexInSection: 2, totalQuestionsInSection: 5 },
+  { sectionIndex: 2, mode: 'buzzer' as const, questionIndexInSection: 3, totalQuestionsInSection: 5 },
+  { sectionIndex: 2, mode: 'buzzer' as const, questionIndexInSection: 4, totalQuestionsInSection: 5 },
+  { sectionIndex: 2, mode: 'buzzer' as const, questionIndexInSection: 5, totalQuestionsInSection: 5 },
+  
+  // Section 3: من أنا (5 questions)
+  { sectionIndex: 3, mode: 'who_am_i' as const, questionIndexInSection: 1, totalQuestionsInSection: 5 },
+  { sectionIndex: 3, mode: 'who_am_i' as const, questionIndexInSection: 2, totalQuestionsInSection: 5 },
+  { sectionIndex: 3, mode: 'who_am_i' as const, questionIndexInSection: 3, totalQuestionsInSection: 5 },
+  { sectionIndex: 3, mode: 'who_am_i' as const, questionIndexInSection: 4, totalQuestionsInSection: 5 },
+  { sectionIndex: 3, mode: 'who_am_i' as const, questionIndexInSection: 5, totalQuestionsInSection: 5 },
+];
+
+export default function App() {
+  // Navigation Screens list
+  const [screen, setScreen] = useState<'splash' | 'menu' | 'team_setup' | 'category_select' | 'section_transition' | 'gameplay' | 'round_result' | 'winner'>('splash');
+
+  // Core Game State and details
   const [teamA, setTeamA] = useState<Team>({ name: 'الأشاوس', score: 0, strikes: 0 });
   const [teamB, setTeamB] = useState<Team>({ name: 'الوحوش', score: 0, strikes: 0 });
   
-  const [currentRound, setCurrentRound] = useState(1);
-  const [maxRounds, setMaxRounds] = useState(5);
   const [selectedCategories, setSelectedCategories] = useState<CategoryId[]>([]);
-  const [currentGameMode, setCurrentGameMode] = useState<GameMode | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
-  // Question Engine lists
+  // Question Engine lists for duplicate prevention
   const [usedListQuestionIds, setUsedListQuestionIds] = useState<string[]>([]);
   const [usedTriviaQuestionIds, setUsedTriviaQuestionIds] = useState<string[]>([]);
 
   const [activeListQuestion, setActiveListQuestion] = useState<ListQuestion | null>(null);
   const [activeTriviaQuestion, setActiveTriviaQuestion] = useState<TriviaQuestion | null>(null);
 
-  // Score keeping per turn
+  // Per-turn match stats
   const [roundWinner, setRoundWinner] = useState<'A' | 'B' | null>(null);
   const [scoreGain, setScoreGain] = useState(1);
+
+  const [matchWinnerName, setMatchWinnerName] = useState('');
+  const [matchWinnerTeam, setMatchWinnerTeam] = useState<'A' | 'B' | 'TIE'>('A');
 
   // Custom question cycle helper for list mode
   const getNextListQuestion = (): ListQuestion => {
@@ -51,7 +120,7 @@ export default function App() {
       available = LIST_QUESTIONS.filter(q => selectedCategories.includes(q.category));
     }
     if (available.length === 0) {
-      available = LIST_QUESTIONS; // fallback
+      available = LIST_QUESTIONS; // fallback if no specific categories selected
     }
     const selected = available[Math.floor(Math.random() * available.length)];
     setUsedListQuestionIds(prev => [...prev, selected.id]);
@@ -66,14 +135,14 @@ export default function App() {
       available = TRIVIA_QUESTIONS.filter(q => selectedCategories.includes(q.category));
     }
     if (available.length === 0) {
-      available = TRIVIA_QUESTIONS; // fallback
+      available = TRIVIA_QUESTIONS; // fallback if empty
     }
     const selected = available[Math.floor(Math.random() * available.length)];
     setUsedTriviaQuestionIds(prev => [...prev, selected.id]);
     return selected;
   };
 
-  // Custom question cycle engine
+  // Select question for specific mode
   const selectQuestionForMode = (mode: GameMode, categories: CategoryId[]) => {
     if (mode === 'turn_challenge' || mode === 'auction') {
       const selected = getNextListQuestion();
@@ -86,19 +155,18 @@ export default function App() {
 
   // Skip / Regenerate question if judge requests
   const handleSkipQuestion = () => {
-    if (currentGameMode) {
-      selectQuestionForMode(currentGameMode, selectedCategories);
-    }
+    const currentStep = MATCH_FLOW[currentStepIndex];
+    selectQuestionForMode(currentStep.mode, selectedCategories);
   };
 
-  // Handler: Select a mode
-  const handleSelectMode = (mode: GameMode) => {
-    setCurrentGameMode(mode);
-    selectQuestionForMode(mode, selectedCategories);
+  // Transition counts complete trigger to start playing!
+  const handleTransitionComplete = () => {
+    const currentStep = MATCH_FLOW[currentStepIndex];
+    selectQuestionForMode(currentStep.mode, selectedCategories);
     setScreen('gameplay');
   };
 
-  // Handler: Finish active gameplay round
+  // Handler: Finish score accounting for single gameplay question
   const handleFinishRound = (winningTeam: 'A' | 'B' | null, pointsAwarded: number, pointsB: number = 0) => {
     // Determine target team awards
     let realPointsA = pointsAwarded;
@@ -122,25 +190,18 @@ export default function App() {
     setScreen('round_result');
   };
 
-  const handleNextRoundProgression = () => {
-    setCurrentRound(prev => prev + 1);
-    setScreen('mode_select');
-  };
-
-  const [matchWinnerName, setMatchWinnerName] = useState('');
-  const [matchWinnerTeam, setMatchWinnerTeam] = useState<'A' | 'B'>('A');
-
-  const handleFinishGameAndCrown = (winner: 'A' | 'B') => {
+  // Crown grand champion on match end
+  const handleFinishGameAndCrown = (winner: 'A' | 'B' | 'TIE', name: string) => {
     setMatchWinnerTeam(winner);
-    setMatchWinnerName(winner === 'A' ? teamA.name : teamB.name);
+    setMatchWinnerName(name);
     setScreen('winner');
   };
 
-  // Game flow resets
+  // Full system reset
   const handleRestartFullGame = () => {
     setTeamA({ name: 'الأشاوس', score: 0, strikes: 0 });
     setTeamB({ name: 'الوحوش', score: 0, strikes: 0 });
-    setCurrentRound(1);
+    setCurrentStepIndex(0);
     setUsedListQuestionIds([]);
     setUsedTriviaQuestionIds([]);
     setScreen('menu');
@@ -159,10 +220,9 @@ export default function App() {
       {screen === 'team_setup' && (
         <TeamSetup 
           onBack={() => setScreen('menu')}
-          onNext={(nameA, nameB, totalRounds) => {
+          onNext={(nameA, nameB) => {
             setTeamA({ name: nameA, score: 0, strikes: 0 });
             setTeamB({ name: nameB, score: 0, strikes: 0 });
-            setMaxRounds(totalRounds);
             setScreen('category_select');
           }}
         />
@@ -173,86 +233,133 @@ export default function App() {
           onBack={() => setScreen('team_setup')}
           onNext={(categories) => {
             setSelectedCategories(categories);
-            setScreen('mode_select');
+            setCurrentStepIndex(0);
+            setScreen('section_transition');
           }}
         />
       )}
 
-      {screen === 'mode_select' && (
-        <GameModeSelect
-          onBack={() => setScreen('category_select')}
-          onSelectMode={handleSelectMode}
-          teamAName={teamA.name}
-          teamBName={teamB.name}
-          currentRound={currentRound}
+      {screen === 'section_transition' && (
+        <SectionTransition
+          sectionIndex={MATCH_FLOW[currentStepIndex].sectionIndex}
+          sectionTitle={MATCH_SECTIONS[MATCH_FLOW[currentStepIndex].sectionIndex].title}
+          description={MATCH_SECTIONS[MATCH_FLOW[currentStepIndex].sectionIndex].description}
+          rules={MATCH_SECTIONS[MATCH_FLOW[currentStepIndex].sectionIndex].rules}
+          onComplete={handleTransitionComplete}
         />
       )}
 
-      {screen === 'gameplay' && currentGameMode === 'turn_challenge' && activeListQuestion && (
-        <TurnChallengeView
-          key={activeListQuestion.id}
-          question={activeListQuestion}
-          teamA={teamA}
-          teamB={teamB}
-          currentRound={currentRound}
-          maxRounds={maxRounds}
-          onFinishRound={handleFinishRound}
-          onSkipRound={handleSkipQuestion}
-        />
-      )}
+      {screen === 'gameplay' && (() => {
+        const currentStep = MATCH_FLOW[currentStepIndex];
 
-      {screen === 'gameplay' && currentGameMode === 'auction' && activeListQuestion && (
-        <AuctionView
-          key={`auction_${currentRound}`}
-          question={activeListQuestion}
-          teamA={teamA}
-          teamB={teamB}
-          currentRound={currentRound}
-          maxRounds={maxRounds}
-          onFinishRound={handleFinishRound}
-          onGetNextQuestion={getNextListQuestion}
-        />
-      )}
+        if (currentStep.mode === 'turn_challenge' && activeListQuestion) {
+          return (
+            <TurnChallengeView
+              key={activeListQuestion.id}
+              question={activeListQuestion}
+              teamA={teamA}
+              teamB={teamB}
+              currentRound={currentStep.questionIndexInSection}
+              maxRounds={currentStep.totalQuestionsInSection}
+              onFinishRound={handleFinishRound}
+              onSkipRound={handleSkipQuestion}
+            />
+          );
+        }
 
-      {screen === 'gameplay' && currentGameMode === 'buzzer' && activeTriviaQuestion && (
-        <BuzzerView
-          key={activeTriviaQuestion.id}
-          question={activeTriviaQuestion}
-          teamA={teamA}
-          teamB={teamB}
-          currentRound={currentRound}
-          maxRounds={maxRounds}
-          onFinishRound={handleFinishRound}
-          onSkipRound={handleSkipQuestion}
-          onGetNextTriviaQuestion={getNextTriviaQuestion}
-        />
-      )}
+        if (currentStep.mode === 'auction' && activeListQuestion) {
+          return (
+            <AuctionView
+              key={`auction_${currentStepIndex}`}
+              question={activeListQuestion}
+              teamA={teamA}
+              teamB={teamB}
+              currentRound={currentStep.questionIndexInSection}
+              maxRounds={currentStep.totalQuestionsInSection}
+              onFinishRound={handleFinishRound}
+              onGetNextQuestion={getNextListQuestion}
+            />
+          );
+        }
 
-      {screen === 'gameplay' && currentGameMode === 'who_am_i' && activeTriviaQuestion && (
-        <WhoAmIView
-          key={activeTriviaQuestion.id}
-          question={activeTriviaQuestion}
-          teamA={teamA}
-          teamB={teamB}
-          currentRound={currentRound}
-          maxRounds={maxRounds}
-          onFinishRound={handleFinishRound}
-          onSkipRound={handleSkipQuestion}
-        />
-      )}
+        if (currentStep.mode === 'buzzer' && activeTriviaQuestion) {
+          return (
+            <BuzzerView
+              key={activeTriviaQuestion.id}
+              question={activeTriviaQuestion}
+              teamA={teamA}
+              teamB={teamB}
+              currentRound={currentStep.questionIndexInSection}
+              maxRounds={currentStep.totalQuestionsInSection}
+              onFinishRound={handleFinishRound}
+              onSkipRound={handleSkipQuestion}
+              onGetNextTriviaQuestion={getNextTriviaQuestion}
+            />
+          );
+        }
 
-      {screen === 'round_result' && (
-        <RoundResultView
-          teamA={teamA}
-          teamB={teamB}
-          currentRound={currentRound}
-          maxRounds={maxRounds}
-          roundWinner={roundWinner}
-          scoreGain={scoreGain}
-          onNextRound={handleNextRoundProgression}
-          onFinishGame={handleFinishGameAndCrown}
-        />
-      )}
+        if (currentStep.mode === 'who_am_i' && activeTriviaQuestion) {
+          return (
+            <WhoAmIView
+              key={activeTriviaQuestion.id}
+              question={activeTriviaQuestion}
+              teamA={teamA}
+              teamB={teamB}
+              currentRound={currentStep.questionIndexInSection}
+              maxRounds={currentStep.totalQuestionsInSection}
+              onFinishRound={handleFinishRound}
+              onSkipRound={handleSkipQuestion}
+            />
+          );
+        }
+
+        return null;
+      })()}
+
+      {screen === 'round_result' && (() => {
+        const currentStep = MATCH_FLOW[currentStepIndex];
+        const nextStep = currentStepIndex + 1 < MATCH_FLOW.length ? MATCH_FLOW[currentStepIndex + 1] : null;
+        const isLastQuestionOfMatch = !nextStep;
+        const isSectionChange = nextStep ? nextStep.sectionIndex !== currentStep.sectionIndex : false;
+        const nextSectionTitle = isSectionChange && nextStep ? MATCH_SECTIONS[nextStep.sectionIndex].title : '';
+
+        return (
+          <RoundResultView
+            teamA={teamA}
+            teamB={teamB}
+            currentSectionIndex={currentStep.sectionIndex}
+            currentQuestionIndexInSection={currentStep.questionIndexInSection}
+            totalQuestionsInSection={currentStep.totalQuestionsInSection}
+            sectionTitle={MATCH_SECTIONS[currentStep.sectionIndex].title}
+            roundWinner={roundWinner}
+            scoreGain={scoreGain}
+            isLastQuestionOfMatch={isLastQuestionOfMatch}
+            isSectionChange={isSectionChange}
+            nextSectionTitle={nextSectionTitle}
+            onProceed={() => {
+              if (isLastQuestionOfMatch) {
+                // Determine grand overall champion
+                const finalWinnerTeam = teamA.score > teamB.score ? 'A' : (teamB.score > teamA.score ? 'B' : 'TIE');
+                const finalWinnerName = finalWinnerTeam === 'A' ? teamA.name : (finalWinnerTeam === 'B' ? teamB.name : '');
+                handleFinishGameAndCrown(finalWinnerTeam, finalWinnerName);
+              } else {
+                const nextIdx = currentStepIndex + 1;
+                setCurrentStepIndex(nextIdx);
+                const nextStepObj = MATCH_FLOW[nextIdx];
+
+                if (isSectionChange) {
+                  // Direct to cinematic countdown transition of next section
+                  setScreen('section_transition');
+                } else {
+                  // Simply transition directly to the next question in the current section
+                  selectQuestionForMode(nextStepObj.mode, selectedCategories);
+                  setScreen('gameplay');
+                }
+              }
+            }}
+          />
+        );
+      })()}
 
       {screen === 'winner' && (
         <WinnerView

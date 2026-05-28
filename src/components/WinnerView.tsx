@@ -10,7 +10,7 @@ import { soundEffects } from '../utils/audio';
 
 interface WinnerViewProps {
   winnerName: string;
-  winnerTeam: 'A' | 'B';
+  winnerTeam: 'A' | 'B' | 'TIE';
   scoreA: number;
   scoreB: number;
   nameA: string;
@@ -35,7 +35,7 @@ export default function WinnerView({
     // Play winner triumph fanfare chord sequence
     soundEffects.playFanfare();
 
-    // Generate 50 random confetti specs
+    // Generate confetti specs
     const colors = ['#f43f5e', '#ec4899', '#3b82f6', '#10b981', '#eab308', '#a855f7'];
     const specs = Array.from({ length: 45 }).map((_, idx) => ({
       id: idx,
@@ -49,6 +49,8 @@ export default function WinnerView({
     }));
     setParticles(specs);
   }, []);
+
+  const isTie = winnerTeam === 'TIE';
 
   return (
     <div className="flex flex-col justify-between min-h-screen text-white bg-slate-950 p-6 select-none relative overflow-hidden" dir="rtl">
@@ -87,8 +89,8 @@ export default function WinnerView({
 
       {/* Score header */}
       <div className="w-full text-center pt-4 z-10">
-        <span className="text-2xs text-slate-500 font-bold block">انتهت المعركة الكبرى</span>
-        <h2 className="text-sm font-semibold text-slate-400">تتويج بطل الجلسة الحقيقي</h2>
+        <span className="text-2xs text-slate-500 font-bold block">انتهت الجلسة التنافسية الكبرى</span>
+        <h2 className="text-sm font-semibold text-slate-400">تتويج بطل المباراة الكبرى</h2>
       </div>
 
       {/* Main champion presentation area */}
@@ -99,43 +101,58 @@ export default function WinnerView({
           initial={{ scale: 0.3, opacity: 0 }}
           animate={{ scale: [1, 1.1, 1], opacity: 1 }}
           transition={{ duration: 1, ease: "easeOut" }}
-          className="relative mb-8"
+          className="relative mb-6"
         >
-          <div className="absolute inset-0 bg-yellow-500 rounded-full blur-[45px] opacity-25 animate-pulse" />
-          <div className="bg-slate-900/80 border border-yellow-500/30 p-7 rounded-full shadow-2xl relative">
-            <Trophy className="w-20 h-20 text-yellow-400 mx-auto drop-shadow-[0_0_15px_rgba(234,179,8,0.4)] animate-bounce" />
+          <div className={`absolute inset-0 rounded-full blur-[45px] opacity-25 animate-pulse ${
+            isTie ? 'bg-indigo-505' : 'bg-yellow-500'
+          }`} />
+          <div className={`bg-slate-900/80 border p-7 rounded-full shadow-2xl relative ${
+            isTie ? 'border-indigo-500/40' : 'border-yellow-500/30'
+          }`}>
+            <Trophy className={`w-20 h-20 mx-auto animate-bounce ${
+              isTie ? 'text-indigo-400 drop-shadow-[0_0_15px_rgba(99,102,241,0.4)]' : 'text-yellow-400 drop-shadow-[0_0_15px_rgba(234,179,8,0.4)]'
+            }`} />
           </div>
         </motion.div>
 
         {/* Winner Announcement Ribbon */}
         <div className="space-y-3 max-w-xs">
-          <span className="text-xs font-black uppercase tracking-widest text-yellow-400 flex items-center justify-center gap-1">
+          <span className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center justify-center gap-1">
             <Sparkles className="w-4 h-4 fill-current text-yellow-400" />
-            ألف مبروك النصر!
+            {isTie ? 'تعادل ملحمي مستحق!' : 'ألف مبروك النصر!'}
             <Sparkles className="w-4 h-4 fill-current text-yellow-400" />
           </span>
 
-          <h1 className={`text-3xl font-black ${winnerTeam === 'A' ? 'text-rose-400' : 'text-sky-400'} drop-shadow-md`}>
-            ★ {winnerName} ★
+          <h1 className={`text-3xl font-black drop-shadow-md ${
+            isTie 
+              ? 'text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-sky-400' 
+              : winnerTeam === 'A' 
+                ? 'text-rose-400' 
+                : 'text-sky-400'
+          }`}>
+            ★ {isTie ? 'تعادل بطولي!' : winnerName} ★
           </h1>
 
-          <p className="text-sm text-slate-400 font-sans leading-relaxed">
-            تأهلتم كفرقة النخبة وأثبتم تفوق ذكائكم وسرعتكم في أصعب تصنيفات الأسئلة بالجلسة!
+          <p className="text-xs text-slate-400 font-sans leading-relaxed">
+            {isTie 
+              ? `قدّم كل من فريق ${nameA} وفريق ${nameB} مواجهة أسطورية وانتهت الجلسة بتقاسم العظمة بالتساوي بمجموع ${scoreA} نقطة!`
+              : `أثبت فريق ${winnerName} تفوقه الاستراتيجي في كافة تفرعات وتحديات المواجهة، فالمجد لكم اليوم!`
+            }
           </p>
         </div>
 
         {/* Final details table */}
-        <div className="w-full bg-slate-900/40 p-5 rounded-3xl border border-slate-850 mt-8 space-y-4">
-          <h3 className="text-xs font-semibold text-slate-500 text-right pr-1">تفاصيل النتيجة النهائية:</h3>
+        <div className="w-full bg-slate-900/40 p-5 rounded-3xl border border-slate-850 mt-6 space-y-3.5">
+          <h3 className="text-xs font-semibold text-slate-500 text-right pr-1">لوحة الترتيب الختامي للدرجات:</h3>
           
           <div className="flex justify-between items-center bg-slate-950 p-3 rounded-2xl border border-slate-900">
             <span className="text-xs text-rose-300 font-extrabold truncate max-w-[150px]">{nameA}</span>
-            <span className="text-base font-black font-sans text-rose-400">{scoreA} نقاط</span>
+            <span className="text-base font-black font-sans text-rose-450">{scoreA} نقاط كليّة</span>
           </div>
 
           <div className="flex justify-between items-center bg-slate-950 p-3 rounded-2xl border border-slate-900">
             <span className="text-xs text-sky-300 font-extrabold truncate max-w-[150px]">{nameB}</span>
-            <span className="text-base font-black font-sans text-sky-400">{scoreB} نقاط</span>
+            <span className="text-base font-black font-sans text-sky-450">{scoreB} نقاط كليّة</span>
           </div>
         </div>
 
@@ -149,10 +166,10 @@ export default function WinnerView({
             soundEffects.playClick();
             onRestart();
           }}
-          className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-base py-4 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/10 cursor-pointer"
+          className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-base py-4 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/10 cursor-pointer animate-pulse"
         >
           <RefreshCw className="w-5 h-5" />
-          ابدأ تحدياً جديداً 🔄
+          مباراة انتقامية جديدة 🔄
         </motion.button>
       </div>
     </div>

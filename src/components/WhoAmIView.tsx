@@ -123,7 +123,7 @@ export default function WhoAmIView({
 
         {/* Clue Progress and Clock */}
         <div className="flex flex-col items-center">
-          <div className="text-[10px] text-slate-500 font-bold mb-1 col-span-1">جولة {currentRound}/{maxRounds}</div>
+          <div className="text-[10px] text-slate-500 font-bold mb-1 col-span-1">السؤال {currentRound}/{maxRounds}</div>
           <div className={`w-11 h-11 rounded-full border flex items-center justify-center font-sans text-xs font-black transition-all ${
             timeLeft <= 6 ? 'bg-rose-950/60 border-rose-500 text-rose-400 animate-pulse' : 'bg-slate-900 border-slate-800 text-slate-200'
           }`}>

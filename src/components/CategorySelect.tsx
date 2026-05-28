@@ -17,7 +17,9 @@ import {
   Moon, 
   Flame, 
   Info,
-  Sparkles
+  Sparkles,
+  Tv,
+  MapPin
 } from 'lucide-react';
 import { CATEGORIES } from '../data/questions';
 import { CategoryId } from '../types';
@@ -33,6 +35,8 @@ const IconMap: Record<string, React.ComponentType<any>> = {
   Coins,
   Moon,
   Flame,
+  Tv,
+  MapPin,
 };
 
 interface CategorySelectProps {
@@ -189,7 +193,7 @@ export default function CategorySelect({ onBack, onNext }: CategorySelectProps) 
           className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-550 hover:to-indigo-550 text-white font-bold text-base py-3.5 rounded-2xl flex items-center justify-center gap-1.5 shadow-xl shadow-indigo-600/10 transition-all border border-violet-500/20 cursor-pointer"
         >
           <Sparkles className="w-4 h-4 text-yellow-300" />
-          اختيار طور وضبط اللعب 🕹️
+          بدء المواجهة الكبرى 🚀
         </motion.button>
       </div>
     </div>
