@@ -1,0 +1,6 @@
+{
+  "name": "تحدي الثلاثين",
+  "description": "لعبة أسئلة وتحديات حماسية ممتعة للجلسات والتجمعات للأصدقاء والعائلات بين فريقين على هاتف واحد.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
