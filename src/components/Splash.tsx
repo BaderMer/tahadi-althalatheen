@@ -7,6 +7,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Sparkles, Trophy, Zap } from 'lucide-react';
 import { soundEffects } from '../utils/audio';
+import { CATEGORIES } from '../data/questions';
 
 interface SplashProps {
   onStart: () => void;
@@ -67,7 +68,7 @@ export default function Splash({ onStart }: SplashProps) {
             <Sparkles className="w-6 h-6 text-yellow-400 mb-2" />
             <div>
               <h3 className="text-sm font-bold text-slate-200">أسئلة متنوعة</h3>
-              <p className="text-xs text-slate-400 mt-1">٨ تصنيفات حماسية ومستويات متفاوتة تناسب الجميع.</p>
+              <p className="text-xs text-slate-400 mt-1">{CATEGORIES.length} حزمة حماسية ومستويات متفاوتة تناسب الجميع.</p>
             </div>
           </div>
         </div>

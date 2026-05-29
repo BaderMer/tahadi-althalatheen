@@ -19,7 +19,8 @@ import {
   Info,
   Sparkles,
   Tv,
-  MapPin
+  MapPin,
+  Flag
 } from 'lucide-react';
 import { CATEGORIES } from '../data/questions';
 import { CategoryId } from '../types';
@@ -37,6 +38,7 @@ const IconMap: Record<string, React.ComponentType<any>> = {
   Flame,
   Tv,
   MapPin,
+  Flag,
 };
 
 interface CategorySelectProps {

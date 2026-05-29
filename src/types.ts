@@ -17,7 +17,8 @@ export type CategoryId =
   | 'islamic' 
   | 'adult_18'
   | 'foreign_series'
-  | 'countries';
+  | 'countries'
+  | 'syria';
 
 export interface Category {
   id: CategoryId;
