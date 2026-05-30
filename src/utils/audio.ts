@@ -100,51 +100,55 @@ export const soundEffects = {
     const ctx = getAudioContext();
     if (!ctx) return;
     
-    // LOUD, SHARP, AND ANNOYING GAME-SHOW BUZZER (TOOOOOT!)
-    const osc1 = ctx.createOscillator();
-    const osc2 = ctx.createOscillator();
-    const osc3 = ctx.createOscillator();
+    // Extremely loud, dramatic, and annoying game-show failure buzzer (TOOOOOOT!)
+    const oscs: OscillatorNode[] = [];
+    const frequencies = [
+      110, // Main fundamental A2 (Sawtooth)
+      111, // Detuned fundamental (Sawtooth)
+      112, // More detuned fundamental (Square)
+      165, // Tritone / fifth harmonic offset (Square)
+      166, // Detuned tritone
+      220, // Fundamental octave (Sawtooth)
+      330, // Fifth harmonic (Square)
+      440, // Second octave (Sawtooth)
+    ];
+
     const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-    
-    // Aggressive, dirty retro frequencies
-    osc1.type = 'sawtooth';
-    osc1.frequency.setValueAtTime(125, ctx.currentTime);
-    
-    osc2.type = 'square';
-    osc2.frequency.setValueAtTime(127, ctx.currentTime); // Beating detone
-    
-    osc3.type = 'sawtooth';
-    osc3.frequency.setValueAtTime(188, ctx.currentTime); // Dissonant tritone offset
-    
-    // Lowpass resonance honk
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(1200, ctx.currentTime);
-    filter.Q.setValueAtTime(6, ctx.currentTime);
-    
-    // High envelope: Instant attack, sustain, rapid fade
-    const dur = 0.65; // Extended to be satisfyingly dramatic
+    // High-resonance bandpass filter to give it that screechy, annoying edge, combined with low-pass
+    const bandpass = ctx.createBiquadFilter();
+    bandpass.type = 'bandpass';
+    bandpass.frequency.setValueAtTime(350, ctx.currentTime);
+    bandpass.Q.setValueAtTime(1.8, ctx.currentTime);
+
+    frequencies.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = i % 2 === 0 ? 'sawtooth' : 'square';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      osc.connect(bandpass);
+      oscs.push(osc);
+    });
+
+    const dur = 1.0; // Play for a full 1 second to make it really lingering and heavy
     gain.gain.setValueAtTime(0.02, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 0.04); // Powerful pop!
-    gain.gain.setValueAtTime(0.6, ctx.currentTime + 0.45);
+    gain.gain.linearRampToValueAtTime(0.85, ctx.currentTime + 0.05); // Rapid, punchy attack!
+    
+    // Add rapid volume modulation or stuttering to sound like an active vibrating retro buzzer!
+    for (let t = 0.05; t < 0.85; t += 0.08) {
+      gain.gain.setValueAtTime(0.85, ctx.currentTime + t);
+      gain.gain.setValueAtTime(0.55, ctx.currentTime + t + 0.04);
+    }
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
-    
-    osc1.connect(filter);
-    osc2.connect(filter);
-    osc3.connect(filter);
-    filter.connect(gain);
+
+    bandpass.connect(gain);
     gain.connect(ctx.destination);
-    
-    osc1.start();
-    osc2.start();
-    osc3.start();
-    
-    osc1.stop(ctx.currentTime + dur);
-    osc2.stop(ctx.currentTime + dur);
-    osc3.stop(ctx.currentTime + dur);
-    
-    // Rhythmic, urgent double haptic vibration
-    this.vibrate([180, 80, 300]);
+
+    oscs.forEach(osc => {
+      osc.start();
+      osc.stop(ctx.currentTime + dur);
+    });
+
+    // Intense physical vibration pattern
+    this.vibrate([250, 100, 250, 100, 400]);
   },
 
   playBuzzer() {

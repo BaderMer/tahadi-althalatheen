@@ -50,12 +50,15 @@ export default function BuzzerView({
   const [buzzerWinner, setBuzzerWinner] = useState<'A' | 'B' | null>(null);
   const [roundWinner, setRoundWinner] = useState<'A' | 'B' | null>(null);
 
+  const hasBuzzedRef = React.useRef(false);
+
   const handleSwapQuestion = () => {
     if (onGetNextTriviaQuestion) {
       soundEffects.playClick();
       const nextQ = onGetNextTriviaQuestion();
       setCurrentQuestion(nextQ);
       // Reset modes
+      hasBuzzedRef.current = false;
       setBuzzerState('idle');
       setBuzzerWinner(null);
       setRoundWinner(null);
@@ -65,7 +68,8 @@ export default function BuzzerView({
   };
 
   const handleBuzz = (team: 'A' | 'B') => {
-    if (buzzerState !== 'idle') return;
+    if (buzzerState !== 'idle' || hasBuzzedRef.current) return;
+    hasBuzzedRef.current = true;
     
     soundEffects.playBuzzer();
     if (navigator.vibrate) {
@@ -201,13 +205,16 @@ export default function BuzzerView({
           {/* TOP BUZZER PANEL: TEAM B (Rotated 180 degrees) */}
           <motion.button
             whileTap={{ scale: buzzerState === 'idle' ? 0.95 : 1 }}
-            onClick={() => handleBuzz('B')}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              handleBuzz('B');
+            }}
             disabled={buzzerState !== 'idle'}
-            className={`flex-1 rounded-3xl transition-all duration-300 relative flex flex-col items-center justify-center overflow-hidden border cursor-pointer ${
+            className={`flex-1 rounded-3xl relative flex flex-col items-center justify-center overflow-hidden border cursor-pointer ${
               buzzerState === 'idle' 
-                ? 'bg-sky-950/20 border-sky-500/20 active:bg-sky-900/45 text-sky-400 font-sans'
+                ? 'bg-sky-950/20 border-sky-500/20 active:bg-sky-900/45 text-sky-400 font-sans transition-all duration-150'
                 : buzzerWinner === 'B' 
-                  ? 'bg-sky-600 border-sky-400 text-white shadow-2xl shadow-sky-500/25 ring-4 ring-sky-300/40 animate-pulse'
+                  ? 'bg-sky-600 border-sky-400 text-white shadow-2xl shadow-sky-500/25 ring-4 ring-sky-300/40'
                   : 'bg-slate-950 border-slate-900 opacity-20'
             }`}
           >
@@ -231,25 +238,40 @@ export default function BuzzerView({
               <Zap className="w-3 h-3 fill-current" />
               جرس السرعة الحاسم • السؤال {currentRound} من {maxRounds}
             </span>
-            <p className="text-base font-black text-slate-100 leading-relaxed font-sans mt-1">
-              {currentQuestion.questionAr}
-            </p>
-            {/* Answer is completely HIDDEN during playing state */}
-            <div className="mt-2.5 text-[10px] text-slate-500 font-bold font-sans">
-              ⚠️ يُمنع الغش - تظهر الإجابة فقط عند مراجعة الحكم.
-            </div>
+            {buzzerState === 'idle' ? (
+              <div className="py-2.5 flex flex-col items-center gap-1.5">
+                <HelpCircle className="w-8 h-8 text-amber-500 animate-pulse mb-0.5" />
+                <h3 className="text-base font-black text-slate-200">الأسئلة مخفية حالياً 🤫</h3>
+                <p className="text-2xs text-slate-400 font-bold leading-normal max-w-[280px]">
+                  أسرع فريق يقرع جرس السرعة يرى السؤال أولاً ويكسب فرصة الإجابة والتحليق بمجد النصر!
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="text-base font-black text-slate-100 leading-relaxed font-sans mt-1">
+                  {currentQuestion.questionAr}
+                </p>
+                {/* Answer is completely HIDDEN during playing state */}
+                <div className="mt-2.5 text-[10px] text-slate-500 font-bold font-sans">
+                  ⚠️ يُمنع الغش - تظهر الإجابة فقط عند مراجعة الحكم.
+                </div>
+              </>
+            )}
           </div>
 
           {/* BOTTOM BUZZER PANEL: TEAM A (Normal Direction) */}
           <motion.button
             whileTap={{ scale: buzzerState === 'idle' ? 0.95 : 1 }}
-            onClick={() => handleBuzz('A')}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              handleBuzz('A');
+            }}
             disabled={buzzerState !== 'idle'}
-            className={`flex-1 rounded-3xl transition-all duration-300 relative flex flex-col items-center justify-center overflow-hidden border cursor-pointer ${
+            className={`flex-1 rounded-3xl relative flex flex-col items-center justify-center overflow-hidden border cursor-pointer ${
               buzzerState === 'idle' 
-                ? 'bg-rose-950/20 border-rose-500/20 active:bg-rose-900/45 text-rose-400 font-sans'
+                ? 'bg-rose-950/20 border-rose-500/20 active:bg-rose-900/45 text-rose-400 font-sans transition-all duration-150'
                 : buzzerWinner === 'A' 
-                  ? 'bg-rose-600 border-rose-400 text-white shadow-2xl shadow-rose-500/25 ring-4 ring-rose-300/40 animate-pulse'
+                  ? 'bg-rose-600 border-rose-400 text-white shadow-2xl shadow-rose-500/25 ring-4 ring-rose-300/40'
                   : 'bg-slate-950 border-slate-900 opacity-20'
             }`}
           >
@@ -364,6 +386,7 @@ export default function BuzzerView({
                   <button
                     onClick={() => {
                       soundEffects.playClick();
+                      hasBuzzedRef.current = false;
                       setBuzzerState('idle');
                       setBuzzerWinner(null);
                       setRoundWinner(null);

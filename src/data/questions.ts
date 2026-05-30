@@ -80,7 +80,7 @@ export const CATEGORIES: Category[] = [
   },
   {
     id: 'adult_18',
-    name: 'جلسة كبار +18 🔥',
+    name: 'Relationship',
     icon: 'Flame',
     description: 'أسئلة علاقات صريحة، مواجهات صعبة، وحقائق محرجة مضحكة.',
     color: 'rose',

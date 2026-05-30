@@ -43,14 +43,14 @@ export default function AuctionView({
   onGetNextQuestion 
 }: AuctionViewProps) {
   
-  // Outer State managing the 4 sub-rounds inside Auction Mode
+  // Outer State managing the 5 sub-rounds inside Auction Mode
   const [currentQuestion, setCurrentQuestion] = useState<ListQuestion>(question);
   const [auctionRound, setAuctionRound] = useState(1);
   const [scoreA, setScoreA] = useState(0);
   const [scoreB, setScoreB] = useState(0);
 
-  // Stages: 'bidding' | 'action' | 'result'
-  const [stage, setStage] = useState<'bidding' | 'action' | 'result'>('bidding');
+  // Stages: 'bidding' | 'action' | 'confirmation' | 'result'
+  const [stage, setStage] = useState<'bidding' | 'action' | 'confirmation' | 'result'>('bidding');
   
   // Bidding states relative to current question
   const [bidA, setBidA] = useState(currentQuestion.minTarget || 3);
@@ -63,8 +63,17 @@ export default function AuctionView({
   const [discoveredAnswers, setDiscoveredAnswers] = useState<string[]>([]);
   const [timeLeft, setTimeLeft] = useState(30);
   const [challengeSuccess, setChallengeSuccess] = useState<boolean | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const togglePause = () => {
+    soundEffects.playClick();
+    const newVal = !isPausedRef.current;
+    isPausedRef.current = newVal;
+    setIsPaused(newVal);
+  };
 
   // Synchronize on first load or changes
   useEffect(() => {
@@ -83,18 +92,28 @@ export default function AuctionView({
 
   const scorePoints = calculatePoints(finalBidAmount);
 
+  const handleActionEnd = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setStage('confirmation');
+  };
+
   // Action timer start (Phase 2)
   useEffect(() => {
     if (stage !== 'action' || challengeSuccess !== null) return;
 
     setTimeLeft(30);
+    isPausedRef.current = false;
+    setIsPaused(false);
     
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
+        if (isPausedRef.current) {
+          return prev;
+        }
         if (prev <= 1) {
           // Timer ended!
-          handleChallengeResult(false);
+          handleActionEnd();
           return 0;
         }
         if (prev <= 6) {
@@ -168,7 +187,7 @@ export default function AuctionView({
       setScoreB(prev => prev + scorePoints);
     }
 
-    if (auctionRound < 4) {
+    if (auctionRound < 5) {
       // Proceed to the next auction question
       soundEffects.playClick();
       const nextQ = onGetNextQuestion();
@@ -187,7 +206,7 @@ export default function AuctionView({
       
       setAuctionRound(prev => prev + 1);
     } else {
-      // 4th internal round finished -> transition back to Master screen
+      // 5th internal round finished -> transition back to Master screen
       soundEffects.playFanfare();
       
       const overallWinner = finalA > finalB ? 'A' : (finalB > finalA ? 'B' : null);
@@ -222,7 +241,7 @@ export default function AuctionView({
       {/* Header Info with dynamic counters and team scores inside current tournament round */}
       <div className="w-full flex justify-between items-center z-10 max-w-md bg-slate-900/45 p-3.5 rounded-2xl border border-slate-850 shadow-md">
         <div className="text-right">
-          <span className="text-xs text-rose-300 font-bold block">المزاد الحاسم • السؤال {auctionRound} من 4</span>
+          <span className="text-xs text-rose-300 font-bold block">المزاد الحاسم • السؤال {auctionRound} من 5</span>
           <span className="text-[10px] text-slate-500 font-sans">الجولة العامة {currentRound} من {maxRounds}</span>
         </div>
         <div className="bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800/80 flex items-center gap-2 text-2xs font-extrabold font-sans">
@@ -256,7 +275,7 @@ export default function AuctionView({
                 >
                   <div className="flex justify-between items-center mb-2.5">
                     <span className="text-[10px] font-bold tracking-wider text-rose-450 uppercase bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/15">
-                      السؤال {auctionRound} من 4 • تحدي المزايدة الجماعية
+                      السؤال {auctionRound} من 5 • تحدي المزايدة الجماعية
                     </span>
                     <button
                       onClick={handleLocalSkip}
@@ -344,7 +363,7 @@ export default function AuctionView({
               <div className="bg-slate-900/40 border border-slate-855 p-4 rounded-2xl text-right flex justify-between items-start">
                 <div className="flex-1 min-w-0 pr-1">
                   <h3 className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-450 to-pink-400">
-                    السؤال {auctionRound} من 4 • فريق المقاومة: {activeTeam === 'A' ? teamA.name : teamB.name} ⚔️
+                    السؤال {auctionRound} من 5 • فريق المقاومة: {activeTeam === 'A' ? teamA.name : teamB.name} ⚔️
                   </h3>
                   <p className="text-sm font-extrabold text-white mt-1 leading-normal">{currentQuestion.questionAr}</p>
                 </div>
@@ -360,7 +379,7 @@ export default function AuctionView({
               </div>
 
               {/* Progress visual bar */}
-              <div className="bg-slate-900 border border-slate-850 p-4 rounded-2xl relative">
+              <div className="bg-slate-900 border border-slate-850 p-4 rounded-2xl relative space-y-3">
                 <div className="flex justify-between items-center text-xs text-slate-400 mb-1.5 font-sans">
                   <span>الهدف لإرضاء المزاد الحاسم:</span>
                   <span className="font-extrabold text-white">
@@ -375,6 +394,26 @@ export default function AuctionView({
                     style={{ width: `${Math.min(100, (discoveredAnswers.length / finalBidAmount) * 100)}%` }}
                   />
                 </div>
+
+                {/* Pause / Resume Button */}
+                <button
+                  onClick={togglePause}
+                  className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 border min-h-[44px] ${
+                    isPaused 
+                      ? 'bg-emerald-600/25 hover:bg-emerald-600/35 text-emerald-400 border-emerald-500/30' 
+                      : 'bg-amber-600/25 hover:bg-amber-600/35 text-amber-400 border-amber-500/30'
+                  }`}
+                >
+                  {isPaused ? (
+                    <>
+                      <span>▶ متابعة الوقت</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>⏸ إيقاف الوقت</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Judge point-and-tap answer sheet */}
@@ -404,11 +443,63 @@ export default function AuctionView({
 
               {/* Failure trigger button */}
               <button
-                onClick={() => handleChallengeResult(false)}
+                onClick={handleActionEnd}
                 className="w-full py-3 bg-slate-950 hover:bg-rose-900/20 border border-slate-850 hover:border-rose-500/30 text-xs font-bold text-slate-400 hover:text-rose-300 rounded-xl transition-all cursor-pointer"
               >
-                أعلن الاستسلام / فشل تحقيق المزاد 🏳️
+                إنهاء التحدي والانتقال للتحكيم ⚖️
               </button>
+            </motion.div>
+          )}
+
+          {/* Phase 2.5: Confirmation Stage */}
+          {stage === 'confirmation' && (
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-slate-900 border border-slate-850 p-6 rounded-3xl w-full text-center space-y-6"
+              key="stage_confirmation"
+              dir="rtl"
+            >
+              <div className="mx-auto w-16 h-16 bg-rose-500/10 border border-rose-500/20 rounded-full flex items-center justify-center text-rose-400">
+                <Volume2 className="w-8 h-8 animate-pulse text-rose-400" />
+              </div>
+              
+              <div className="space-y-4">
+                <span className="text-[10px] font-bold tracking-wider text-rose-455 uppercase bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/15 inline-block text-rose-400">
+                  تحكيم المضيف ⚖️
+                </span>
+                <h2 className="text-lg font-extrabold text-slate-100 leading-normal">
+                  هل حقق فريق <span className="text-rose-400 font-extrabold">{activeTeam === 'A' ? teamA.name : teamB.name}</span> العدد المطلوب؟
+                </h2>
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-850 space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">المزاد المطلوب:</span>
+                    <span className="font-extrabold text-white text-base">{finalBidAmount} إجابة</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">تلقى المضيف:</span>
+                    <span className="font-extrabold text-white text-base">{discoveredAnswers.length} إجابة صحيحة</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <button
+                  onClick={() => handleChallengeResult(true)}
+                  className="bg-emerald-600 hover:bg-emerald-550 py-3.5 rounded-2xl font-black text-base text-white shadow-lg shadow-emerald-950/20 transition-all cursor-pointer flex flex-col items-center justify-center gap-1 min-h-[72px]"
+                >
+                  <span className="text-2xl mb-1">✅</span>
+                  <span>نعم</span>
+                </button>
+                <button
+                  onClick={() => handleChallengeResult(false)}
+                  className="bg-rose-600 hover:bg-rose-550 py-3.5 rounded-2xl font-black text-base text-white shadow-lg shadow-rose-950/20 transition-all cursor-pointer flex flex-col items-center justify-center gap-1 min-h-[72px]"
+                >
+                  <span className="text-2xl mb-1">❌</span>
+                  <span>لا</span>
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -423,7 +514,7 @@ export default function AuctionView({
             >
               <Award className="w-12 h-12 text-yellow-400 mx-auto" />
               <div>
-                <h3 className="text-base font-black text-slate-400">السؤال {auctionRound} من 4 완료</h3>
+                <h3 className="text-base font-black text-slate-400">السؤال {auctionRound} من 5</h3>
                 {challengeSuccess ? (
                   <>
                     <h2 className="text-xl font-black text-rose-400 mt-1">تحدي ناجح بالكامل! 🎉</h2>
@@ -449,7 +540,7 @@ export default function AuctionView({
                 onClick={handleFinishAndSubmit}
                 className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 py-3 rounded-xl font-bold text-sm text-white shadow-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <span>{auctionRound < 4 ? `الموافقة والانتقال للسؤال ${auctionRound + 1}` : 'الموافقة وإنهاء المزاد الحاسم 🏆'}</span>
+                <span>{auctionRound < 5 ? `الموافقة والانتقال للسؤال ${auctionRound + 1}` : 'الموافقة وإنهاء المزاد الحاسم 🏆'}</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </motion.div>
@@ -459,7 +550,7 @@ export default function AuctionView({
       </div>
 
       {/* Screen bottom bar spacer / skip - Omnipresent except when submitting the final tournament scores */}
-      {!(stage === 'result' && auctionRound === 4) && (
+      {!(stage === 'result' && auctionRound === 5) && (
         <button
           onClick={handleLocalSkip}
           className="w-full text-center text-xs text-slate-500 hover:text-slate-300 transition-colors py-2 cursor-pointer mt-4"

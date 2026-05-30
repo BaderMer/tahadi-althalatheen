@@ -46,8 +46,8 @@ export default function RoundResultView({
 
   // Static list of all sections for TV standings checkoff
   const sectionsInfo = [
-    { title: 'تحدي الدور', subtitle: '٣ أسئلة منفصلة' },
-    { title: 'المزاد الحاسم', subtitle: '٤ أسئلة مزايدة' },
+    { title: 'تحدي الدور', subtitle: '٥ أسئلة منفصلة' },
+    { title: 'المزاد الحاسم', subtitle: '٥ أسئلة مزايدة' },
     { title: 'جرس السرعة', subtitle: '٥ أسئلة سرعة' },
     { title: 'مسابقة من أنا', subtitle: '٥ أسئلة تلميحات' }
   ];

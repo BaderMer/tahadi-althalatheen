@@ -49,8 +49,57 @@ export default function TurnChallengeView({
   const [winner, setWinner] = useState<'A' | 'B' | null>(null);
   const [isDraw, setIsDraw] = useState(false);
   const [strikeTriggered, setStrikeTriggered] = useState(false);
+  const [hasPassA, setHasPassA] = useState(true);
+  const [hasPassB, setHasPassB] = useState(true);
+  const [passAnimationTeam, setPassAnimationTeam] = useState<'A' | 'B' | null>(null);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const playPassSound = () => {
+    try {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtxClass) return;
+      const ctx = new AudioCtxClass();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.25);
+    } catch (e) {
+      // Safe fallback
+    }
+  };
+
+  const handleUsePass = (team: 'A' | 'B') => {
+    if (roundOver) return;
+    if (team === 'A' && (!hasPassA || activeTeam !== 'A')) return;
+    if (team === 'B' && (!hasPassB || activeTeam !== 'B')) return;
+
+    // Consume the PASS
+    if (team === 'A') {
+      setHasPassA(false);
+    } else {
+      setHasPassB(false);
+    }
+
+    // Play Custom PASS transition sound
+    playPassSound();
+
+    // Trigger visual notification
+    setPassAnimationTeam(team);
+    setTimeout(() => {
+      setPassAnimationTeam(null);
+    }, 1500);
+
+    // Swap turn without losing lives or recording strikes
+    switchTurn();
+  };
 
   // Restart 30-second timer whenever turn switches
   useEffect(() => {
@@ -92,7 +141,7 @@ export default function TurnChallengeView({
     setStrikeTriggered(true);
     setTimeout(() => {
       setStrikeTriggered(false);
-    }, 650);
+    }, 1000);
 
     if (team === 'A') {
       setLivesA(prev => {
@@ -183,10 +232,11 @@ export default function TurnChallengeView({
   return (
     <motion.div 
       animate={strikeTriggered ? {
-        x: [0, -12, 12, -12, 12, -8, 8, -4, 4, 0],
-        y: [0, 6, -6, 6, -6, 4, -4, 2, -2, 0]
+        x: [0, -35, 30, -35, 25, -20, 15, -10, 5, 0],
+        y: [0, 20, -15, 15, -10, 8, -6, 4, -2, 0],
+        scale: [1, 1.06, 0.94, 1.04, 0.97, 1.02, 1]
       } : {}}
-      transition={{ duration: 0.55, ease: "easeInOut" }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
       className="flex flex-col justify-between min-h-screen text-white bg-slate-950 p-6 select-none relative overflow-hidden" 
       dir="rtl"
     >
@@ -195,11 +245,36 @@ export default function TurnChallengeView({
         {strikeTriggered && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.5, 0.5, 0] }}
+            animate={{ opacity: [0, 1, 0.4, 1, 0] }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, times: [0, 0.1, 0.4, 1] }}
-            className="absolute inset-0 bg-rose-600/25 border-4 border-rose-500 z-50 pointer-events-none"
+            transition={{ duration: 0.9, times: [0, 0.15, 0.4, 0.65, 1] }}
+            className="absolute inset-0 bg-red-600/35 border-[24px] border-red-600 z-50 pointer-events-none"
           />
+        )}
+      </AnimatePresence>
+
+      {/* Full-screen PASS used overlay/toast */}
+      <AnimatePresence>
+        {passAnimationTeam && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="absolute inset-0 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm z-50 pointer-events-none"
+          >
+            <div className={`px-6 py-4 rounded-3xl border text-center shadow-2xl space-y-2 max-w-[280px] ${
+              passAnimationTeam === 'A' 
+                ? 'bg-rose-950/90 border-rose-500 shadow-rose-900/40 text-rose-200' 
+                : 'bg-sky-950/90 border-sky-500 shadow-sky-900/40 text-sky-200'
+            }`}>
+              <div className="text-3xl">🛡️</div>
+              <h2 className="text-lg font-black tracking-wide">تم استخدام PASS</h2>
+              <p className="text-xs text-slate-300 leading-normal">
+                قام فريق <span className="font-extrabold text-white">{passAnimationTeam === 'A' ? teamA.name : teamB.name}</span> بتجاوز الدور وحماية أرواحه!
+              </p>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -225,9 +300,9 @@ export default function TurnChallengeView({
                   animate={
                     isActive 
                       ? { scale: [1, 1.15, 1], rotate: [0, 2, -2, 0] } 
-                      : { scale: [1, 1.6, 0], opacity: [1, 1, 0] }
+                      : { scale: [1, 2.8, 0], rotate: [0, 180, 540], opacity: [1, 1, 0] }
                   }
-                  transition={{ duration: 0.45, ease: "easeInOut" }}
+                  transition={{ duration: 0.85, ease: "easeOut" }}
                   className="relative flex items-center justify-center w-5 h-5 flex-shrink-0"
                 >
                   {isActive ? (
@@ -244,6 +319,23 @@ export default function TurnChallengeView({
                 </motion.div>
               );
             })}
+          </div>
+          {/* PASS button */}
+          <div className="mt-2.5">
+            <button
+              onClick={() => handleUsePass('A')}
+              disabled={roundOver || !hasPassA || activeTeam !== 'A'}
+              className={`w-full py-1 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1 border min-h-[30px] ${
+                !hasPassA
+                  ? 'bg-slate-950 border-slate-900/40 text-slate-600 opacity-40 cursor-not-allowed'
+                  : activeTeam === 'A'
+                    ? 'bg-rose-600/20 hover:bg-rose-600/35 border-rose-500 text-rose-300 shadow-md shadow-rose-500/10'
+                    : 'bg-slate-950/40 border-slate-850 text-slate-500 hover:text-slate-400'
+              }`}
+            >
+              <span>PASS</span>
+              <span className="font-sans font-black">×{hasPassA ? 1 : 0}</span>
+            </button>
           </div>
         </div>
 
@@ -273,9 +365,9 @@ export default function TurnChallengeView({
                   animate={
                     isActive 
                       ? { scale: [1, 1.15, 1], rotate: [0, 2, -2, 0] } 
-                      : { scale: [1, 1.6, 0], opacity: [1, 1, 0] }
+                      : { scale: [1, 2.8, 0], rotate: [0, 180, 540], opacity: [1, 1, 0] }
                   }
-                  transition={{ duration: 0.45, ease: "easeInOut" }}
+                  transition={{ duration: 0.85, ease: "easeOut" }}
                   className="relative flex items-center justify-center w-5 h-5 flex-shrink-0"
                 >
                   {isActive ? (
@@ -292,6 +384,23 @@ export default function TurnChallengeView({
                 </motion.div>
               );
             })}
+          </div>
+          {/* PASS button */}
+          <div className="mt-2.5">
+            <button
+              onClick={() => handleUsePass('B')}
+              disabled={roundOver || !hasPassB || activeTeam !== 'B'}
+              className={`w-full py-1 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1 border min-h-[30px] ${
+                !hasPassB
+                  ? 'bg-slate-950 border-slate-900/40 text-slate-600 opacity-40 cursor-not-allowed'
+                  : activeTeam === 'B'
+                    ? 'bg-sky-600/20 hover:bg-sky-600/35 border-sky-500 text-sky-300 shadow-md shadow-sky-500/10'
+                    : 'bg-slate-950/40 border-slate-850 text-slate-500 hover:text-slate-400'
+              }`}
+            >
+              <span>PASS</span>
+              <span className="font-sans font-black">×{hasPassB ? 1 : 0}</span>
+            </button>
           </div>
         </div>
       </div>

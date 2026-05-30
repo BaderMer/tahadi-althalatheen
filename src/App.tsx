@@ -24,9 +24,9 @@ const MATCH_SECTIONS = [
   {
     id: 'turn_challenge' as const,
     title: 'تحدي الدور 🕹️',
-    description: '٣ أسئلة • الإجابة بالدور مع ٣ أرواح لكل فريق. تجنب الخطأ واحصد نقاط التفوق!',
+    description: '٥ أسئلة • الإجابة بالدور مع ٣ أرواح لكل فريق. تجنب الخطأ واحصد نقاط التفوق!',
     rules: [
-      "٣ أسئلة متسلسلة للطرفين يتم الإجابة فيها بالتبادل والتناوب.",
+      "٥ أسئلة متسلسلة للطرفين يتم الإجابة فيها بالتبادل والتناوب.",
       "كل فريق لديه ٣ أرواح (محاولات خطأ) والهدف كشف أكبر عدد من إجابات الكلمة.",
       "الفريق الحاصد لبقايا الأرواح الأكثر يكسب نقطة السؤال!"
     ]
@@ -34,9 +34,9 @@ const MATCH_SECTIONS = [
   {
     id: 'auction' as const,
     title: 'مزاد الإجابات ⚖️',
-    description: '٤ أسئلة مزايدة حاسمة • زايد بذكاء مع خصمك على كمية الإجابات التي يمكنك سردها ثقة بالنجاح!',
+    description: '٥ أسئلة مزايدة حاسمة • زايد بذكاء مع خصمك على كمية الإجابات التي يمكنك سردها ثقة بالنجاح!',
     rules: [
-      "مسابقة مزايدة حماسية تدوم لـ ٤ عناصر سرية ممتعة.",
+      "مسابقة مزايدة حماسية تدوم لـ ٥ عناصر سرية ممتعة.",
       "صاحب المزايدة الأعلى يحب عليه كشف العدد المعلن بدون خطأ واحد ليكسب المزاد.",
       "الفشل يمنح النقطة مباشرة وبشكل تنافسي للخصم دون عناء!"
     ]
@@ -64,12 +64,14 @@ const MATCH_SECTIONS = [
 ];
 
 const MATCH_FLOW = [
-  // Section 0: تحدي الدور (3 questions)
-  { sectionIndex: 0, mode: 'turn_challenge' as const, questionIndexInSection: 1, totalQuestionsInSection: 3 },
-  { sectionIndex: 0, mode: 'turn_challenge' as const, questionIndexInSection: 2, totalQuestionsInSection: 3 },
-  { sectionIndex: 0, mode: 'turn_challenge' as const, questionIndexInSection: 3, totalQuestionsInSection: 3 },
+  // Section 0: تحدي الدور (5 questions)
+  { sectionIndex: 0, mode: 'turn_challenge' as const, questionIndexInSection: 1, totalQuestionsInSection: 5 },
+  { sectionIndex: 0, mode: 'turn_challenge' as const, questionIndexInSection: 2, totalQuestionsInSection: 5 },
+  { sectionIndex: 0, mode: 'turn_challenge' as const, questionIndexInSection: 3, totalQuestionsInSection: 5 },
+  { sectionIndex: 0, mode: 'turn_challenge' as const, questionIndexInSection: 4, totalQuestionsInSection: 5 },
+  { sectionIndex: 0, mode: 'turn_challenge' as const, questionIndexInSection: 5, totalQuestionsInSection: 5 },
   
-  // Section 1: المزاد (1 step that plays 4 questions internally)
+  // Section 1: المزاد (1 step that plays 5 questions internally)
   { sectionIndex: 1, mode: 'auction' as const, questionIndexInSection: 1, totalQuestionsInSection: 1 },
   
   // Section 2: الجرس (5 questions)

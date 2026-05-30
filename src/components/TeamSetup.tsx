@@ -117,11 +117,11 @@ export default function TeamSetup({ onBack, onNext }: TeamSetupProps) {
             <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-400">
               <div className="bg-slate-900 border border-slate-800 px-2 py-1.5 rounded-lg flex flex-col justify-center">
                 <span className="font-bold text-slate-300">١. تحدي الدور 🕹️</span>
-                <span>٣ أسئلة بالدور</span>
+                <span>٥ أسئلة بالدور</span>
               </div>
               <div className="bg-slate-900 border border-slate-800 px-2 py-1.5 rounded-lg flex flex-col justify-center">
                 <span className="font-bold text-slate-300">٢. المزاد ⚖️</span>
-                <span>٤ أسئلة مزايدة حية</span>
+                <span>٥ أسئلة مزايدة حية</span>
               </div>
               <div className="bg-slate-900 border border-slate-800 px-2 py-1.5 rounded-lg flex flex-col justify-center">
                 <span className="font-bold text-slate-300">٣. الجرس 🔔</span>
